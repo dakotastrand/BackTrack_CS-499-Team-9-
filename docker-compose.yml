@@ -1,9 +1,11 @@
-version: '3.8'
-
 services:
-  server:
+  backtrack_server:
     build:
       context: ./server
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.server
+    image: backtrack_server:latest
+    container_name: backtrack_server
+    restart: unless-stopped
+    pull_policy: never
     ports:
       - "5050:5050"

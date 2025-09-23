@@ -4,15 +4,17 @@ This guide will walk you through setting up and running the BackTrack server and
 
 ## 1. Server Setup
 
-Follow these steps to get the Python backend server running.
+Follow these steps to get the Python backend server running natively.
 
 1.  **Navigate to the Server Directory**
+    
     Open a terminal and navigate to the `server` directory from the project root.
     ```bash
     cd server
     ```
 
 2.  **Create and Activate Virtual Environment**
+    
     Create a Python virtual environment to isolate dependencies.
     ```bash
     python -m venv venv
@@ -28,16 +30,34 @@ Follow these steps to get the Python backend server running.
         ```
 
 3.  **Install Dependencies**
+    
     Install the required Python packages from `requirements.txt`.
     ```bash
     pip install -r requirements.txt
     ```
 
 4.  **Run the Server**
+    
     Start the Flask server.
-    ```bash
+    ```bash 
     python server.py
     ```
+
+### 1.1 Docker Setup
+
+1. **Download Docker**
+    
+    If you're using a Windows machine, it is recommended to download [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/).
+    Else, look at the Docker documentation to install it for your machine. You may need to restart your computer in the process.
+
+    Make sure the Docker daemon is running on your machine. If you are using Docker Desktop, make sure the app is open.
+
+    To make sure your Docker installation is running properly, run `docker run hello-world:latest` in the command line.
+
+2. **Build and Run the Server**
+    
+    In a terminal, run `docker compose up --build` to build the services and run them. You should see information about the server in your terminal.
+
 
 ## 2. Mobile App Setup
 
