@@ -11,3 +11,4 @@ test.db
 
 # Editor-specific files (VS Code)
 .vscode/
+node_modules/
