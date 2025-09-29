@@ -1,0 +1,1 @@
+export { default } from "../components/timer_screen_strand";
