@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { Link, router } from "expo-router";
+import { useSession } from "../../context/ctx";
 
 export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { signIn } = useSession(); // Correct: Hook called at the top level
 
   const onLogin = async () => {
     // Front-end validation
@@ -25,8 +27,8 @@ export default function LoginScreen() {
       // // store token (e.g., SecureStore) and go to the app
       // await SecureStore.setItemAsync("token", data.token);
 
-      // Purely front-end: pretend success + navigate
-      router.replace("(tabs)");
+      signIn(); // Call signIn to set the session
+      router.replace("/(tabs)");
     } catch (e: any) {
       Alert.alert("Login failed", e?.message ?? "Please try again.");
     } finally {
