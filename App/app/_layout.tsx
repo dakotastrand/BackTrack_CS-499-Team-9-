@@ -41,9 +41,19 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+<<<<<<< HEAD
   return (
     <SessionProvider>
       <RootLayoutNav />
     </SessionProvider>
+=======
+ return (
+    <Stack screenOptions={{ headerTitleAlign: "center" }}>
+      <Stack.Screen name="index" options={{ title: "Home" }} />
+      <Stack.Screen name="login" options={{ title: "Login" }} />
+      <Stack.Screen name="friends" options={{ title: "Friends" }} />
+      <Stack.Screen name="timer" options={{ title: "Timer" }} />
+    </Stack>
+>>>>>>> 73d13532ad4b393cf28a807257eceea3c352349a
   );
 }
