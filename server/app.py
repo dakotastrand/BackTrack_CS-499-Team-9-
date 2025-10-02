@@ -2,12 +2,16 @@ from flask import Flask, render_template, url_for, request, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash 
 import uuid
+import jwt
+import os
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 # Enable CORS to allow API requests from other origins (like a mobile app)
 CORS(app)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-very-secret-key-that-should-be-changed')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 db = SQLAlchemy(app)
 
@@ -165,6 +169,30 @@ def delete_task_api(id):
         return jsonify({'error': 'There was a problem deleting that task'}), 500
 
 # --- API Endpoints for User Authentication ---
+
+@app.route('/api/login', methods=['POST'])
+def login_user():
+    data = request.get_json()
+    if not data or not 'username' in data or not 'password' in data:
+        return jsonify({'error': 'Missing username or password'}), 400
+
+    username = data['username']
+    password = data['password']
+
+    user = User.query.filter_by(username=username).first()
+
+    # Check if user exists and password hash is correct
+    if not user or not check_password_hash(user.password, password):
+        return jsonify({'error': 'Invalid credentials'}), 401
+
+    # Create a token that expires in 24 hours
+    token = jwt.encode({
+        'user_id': user.user_id,
+        'exp': datetime.utcnow() + timedelta(hours=24)
+    }, app.config['SECRET_KEY'], algorithm="HS256")
+
+    return jsonify({'token': token})
+
 
 @app.route('/api/register', methods=['POST'])
 def register_user():
