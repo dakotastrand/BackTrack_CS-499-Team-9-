@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, FlatList, StyleSheet } from "react-native";
-import { useFriends } from "../hooks/useFriends";
+import { useFriends } from "./use_friends_strand";
 
 export default function FriendListScreen() {
   const { friends, addFriend, removeFriend } = useFriends();
