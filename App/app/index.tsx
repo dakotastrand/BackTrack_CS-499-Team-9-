@@ -1,15 +1,18 @@
-import { Text, View } from "react-native";
+/**
+ * filename: index.tsx
+ * author: Dakota Strand
+ * description: redirect to login screen
+ */
+
+import { Redirect } from "expo-router";
+import { useAuth } from "hooks/use_auth_strand";
 
 export default function Index() {
+  const { isLoggedIn } = useAuth();
+
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Hi Will, I'm editing index.tsx</Text>
-    </View>
+    <Redirect
+      href={isLoggedIn ? "/timer_screen_strand" : "/login_screen_strand"}
+    />
   );
 }
