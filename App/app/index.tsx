@@ -1,7 +1,7 @@
 /**
  * filename: index.tsx
- * author: Dakota Strand
- * description: redirect to login screen
+ * author: Team 9 // Dakota Strand,
+ * description: redirect to login or timer screen based on login state
  */
 
 import { Redirect } from "expo-router";

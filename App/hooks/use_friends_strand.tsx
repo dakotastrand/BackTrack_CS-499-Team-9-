@@ -1,39 +1,52 @@
 /**
  * filename: use_friends_strand.tsx
  * author: Dakota Strand
- * description: friends context and hook
+ * description: friends context with add/remove, favorite toggle
  */
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
-// define what the friends context will provide
-interface FriendsContextType {
-  friends: string[];
-  addFriend: (name: string) => void;
+// Friend object type
+interface Friend {
+  name: string;
+  favorite: boolean;
 }
 
-// create the context
+interface FriendsContextType {
+  friends: Friend[];
+  addFriend: (name: string) => void;
+  removeFriend: (name: string) => void;
+  toggleFavorite: (name: string) => void;
+}
+
 const FriendsContext = createContext<FriendsContextType | null>(null);
 
-// props for the provider
 interface FriendsProviderProps {
   children: ReactNode;
 }
 
-// provide friends context to all children
 export function FriendsProvider({ children }: FriendsProviderProps) {
-  const [friends, setFriends] = useState(["alex", "jordan"]);
+  const [friends, setFriends] = useState<Friend[]>([
+    { name: "Dakota", favorite: false },
+    { name: "Jamie", favorite: false },
+    { name: "Raj", favorite: false },
+    { name: "Will", favorite: false },
+  ]);
 
-  const addFriend = (name: string) => setFriends((prev) => [...prev, name]);
+  const addFriend = (name: string) => setFriends((prev) => [...prev, { name, favorite: false }]);
+  const removeFriend = (name: string) => setFriends((prev) => prev.filter((f) => f.name !== name));
+  const toggleFavorite = (name: string) =>
+    setFriends((prev) =>
+      prev.map((f) => (f.name === name ? { ...f, favorite: !f.favorite } : f))
+    );
 
   return (
-    <FriendsContext.Provider value={{ friends, addFriend }}>
+    <FriendsContext.Provider value={{ friends, addFriend, removeFriend, toggleFavorite }}>
       {children}
     </FriendsContext.Provider>
   );
 }
 
-// hook to consume the friends context
 export const useFriends = () => {
   const context = useContext(FriendsContext);
   if (!context) throw new Error("useFriends must be used within FriendsProvider");

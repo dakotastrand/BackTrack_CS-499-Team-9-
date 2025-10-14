@@ -1,50 +1,45 @@
 /**
  * filename: use_auth_strand.tsx
  * author: Dakota Strand
- * description: authentication context and hook
+ * description: authentication context and hook with signup & forgot password
  */
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
-// define what the auth context will provide
 interface AuthContextType {
   isLoggedIn: boolean;
   user: string | null;
   login: (username: string) => void;
   logout: () => void;
+  signUp: (username: string) => boolean;
+  forgotPassword: (username: string) => void;
 }
 
-// create the context
+interface AuthProviderProps { children: ReactNode; }
+
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// props for the provider
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-// provide auth context to all children
 export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<string | null>(null);
+  const [users, setUsers] = useState<string[]>([]);
 
-  const login = (username: string) => {
-    setUser(username);
-    setIsLoggedIn(true);
+  const login = (username: string) => { if (users.includes(username)) { setUser(username); setIsLoggedIn(true); } };
+  const logout = () => { setUser(null); setIsLoggedIn(false); };
+  const signUp = (username: string) => {
+    if (users.includes(username)) return false;
+    setUsers([...users, username]);
+    return true;
   };
-
-  const logout = () => {
-    setUser(null);
-    setIsLoggedIn(false);
-  };
+  const forgotPassword = (username: string) => { console.log(`Password reset for ${username}`); };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, login, logout, signUp, forgotPassword }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-// hook to consume the auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth must be used within AuthProvider");

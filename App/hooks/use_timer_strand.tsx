@@ -1,49 +1,61 @@
 /**
  * filename: use_timer_strand.tsx
  * author: Dakota Strand
- * description: timer context and hook
+ * description: timer context and hook for BackTrack app
  */
 
 import React, { createContext, useContext, useState, useRef, ReactNode } from "react";
 
-// define what the timer context will provide
+// Define what the timer context provides
 interface TimerContextType {
-  time: number;
-  start: () => void;
-  stop: () => void;
+  time: number; // current timer in seconds
+  startTimer: () => void;
+  stopTimer: () => void;
+  resetTimer: () => void;
 }
 
-// create the context
+// Create the context
 const TimerContext = createContext<TimerContextType | null>(null);
 
-// props for the provider
+// Props for the provider
 interface TimerProviderProps {
   children: ReactNode;
 }
 
-// provide timer context to all children
+// Provide timer context to all children
 export function TimerProvider({ children }: TimerProviderProps) {
   const [time, setTime] = useState(0);
-  const intervalRef = useRef<NodeJS.Timer | null>(null);
 
-  const start = () => {
-    if (intervalRef.current) return; // prevent multiple intervals
-    intervalRef.current = setInterval(() => setTime((t) => t + 1), 1000);
+  // Fixed type for intervalRef to satisfy TypeScript
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startTimer = () => {
+    if (intervalRef.current) return; // already running
+    intervalRef.current = setInterval(() => {
+      setTime((prev) => prev + 1);
+    }, 1000);
   };
 
-  const stop = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    intervalRef.current = null;
+  const stopTimer = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  const resetTimer = () => {
+    stopTimer();
+    setTime(0);
   };
 
   return (
-    <TimerContext.Provider value={{ time, start, stop }}>
+    <TimerContext.Provider value={{ time, startTimer, stopTimer, resetTimer }}>
       {children}
     </TimerContext.Provider>
   );
 }
 
-// hook to consume the timer context
+// Hook to consume the timer context
 export const useTimer = () => {
   const context = useContext(TimerContext);
   if (!context) throw new Error("useTimer must be used within TimerProvider");
