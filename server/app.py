@@ -1,19 +1,32 @@
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, render_template, url_for, request, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash 
 import uuid
 import jwt
 import os
 from datetime import datetime, timedelta
+import json
 
 app = Flask(__name__)
-# Enable CORS to allow API requests from other origins (like a mobile app)
-CORS(app)
+# # Enable CORS to allow API requests from other origins (like a mobile app)
+# CORS(app)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-very-secret-key-that-should-be-changed')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 db = SQLAlchemy(app)
+
+socket_app = SocketIO(
+    app, 
+    cors_allowed_origins="*",
+    async_mode='eventlet',  # Specify eventlet
+    logger=True,
+    engineio_logger=True
+)
 
 class Todo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -224,3 +237,18 @@ def register_user():
         return jsonify({'message': 'User created successfully', 'user_id': new_user.user_id}), 201
     except Exception as e:
         return jsonify({'error': f'Database error: {str(e)}'}), 500
+    
+
+### Socket app ###
+
+@socket_app.on("connect")
+def connect():
+    print(f'Client connected on socket: {request.sid}')
+
+@socket_app.on("disconnect")
+def disconnect():
+    print(f'Client disconnected on socket: {request.sid}')
+
+@socket_app.on("data")
+def handle_message(data):
+    print(f'Client sent data on socket: {str(data)}')
