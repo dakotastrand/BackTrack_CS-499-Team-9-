@@ -7,7 +7,7 @@ import { useTimer } from "../../hooks/useTimer";
 
 export default function TimerScreen(props: any) {
   const { timer, startTimer, extendTimer, cancelTimer } = useTimer();
-  const [duration] = useState<number>(5); // Default timer: 5 minutes
+  const [duration] = useState<number>(0.1); // Default timer: 5 minutes
 
   return (
     <View style={styles.container}>
