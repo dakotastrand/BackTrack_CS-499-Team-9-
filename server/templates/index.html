@@ -32,6 +32,26 @@
         {% endfor %}
     </table>
     {% endif %}
+    <h2>Registered Users (For Debugging Only)</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Hashed Password</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.password }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
 
     <div class="form">
         <form action="/" method="POST">

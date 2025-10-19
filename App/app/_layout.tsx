@@ -1,24 +1,34 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import { SessionProvider, useSession } from "../context/ctx";
+import { Slot, useRouter, useSegments } from "expo-router";
+import { useEffect } from "react";
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
+function Root() {
+  const { session, isLoading } = useSession();
+  const segments = useSegments();
+  const router = useRouter();
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+  // This effect will automatically redirect the user based on their auth state.
+  useEffect(() => {
+    if (isLoading) return; // Don't redirect until the session is loaded
+
+    const inAuthGroup = segments[0] === "(auth)";
+
+    if (session && inAuthGroup) {
+      // User is signed in but is in the auth group, so redirect to the main app.
+      router.replace("/(tabs)");
+    } else if (!session && !inAuthGroup) {
+      // User is not signed in and is not in the auth group, so redirect to the login screen.
+      router.replace("/login");
+    }
+  }, [session, isLoading, segments]);
+
+  return <Slot />;
+}
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <SessionProvider>
+      <Root />
+    </SessionProvider>
   );
 }
