@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
+import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, Alert, StyleSheet } from "react-native";
 import { Link, router } from "expo-router";
-
+ 
 export default function RegisterScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [confirm, setConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -12,24 +13,24 @@ export default function RegisterScreen() {
     // Front-end validation
     if (!username.trim()) return Alert.alert("Please enter a username.");
     if (password.length < 8) return Alert.alert("Password must be at least 8 characters.");
+    if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) return Alert.alert("Please enter a valid email address.");
     if (password !== confirm) return Alert.alert("Passwords do not match.");
 
     setSubmitting(true);
     try {
-      // --- Potential backend call (commented) ---
-      // const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/register`, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ username, password }),
-      // });
-      // if (!res.ok) throw new Error("Registration failed");
-      // const data = await res.json();
-      // // Optionally auto-login then route into app
-      // await SecureStore.setItemAsync("token", data.token);
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, email }),
+      });
 
-      // Purely front-end: pretend success + navigate
-      Alert.alert("Success", "Account created!");
-      router.replace("/(auth)/login");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Registration failed");
+      }
+
+      Alert.alert("Success", "Account created successfully! Please log in.");
+      router.replace("/(auth)/login"); // Redirect to login screen
     } catch (e: any) {
       Alert.alert("Registration failed", e?.message ?? "Please try again.");
     } finally {
@@ -48,6 +49,14 @@ export default function RegisterScreen() {
           autoCapitalize="none"
           value={username}
           onChangeText={setUsername}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          value={email}
+          onChangeText={setEmail}
         />
         <TextInput
           style={styles.input}

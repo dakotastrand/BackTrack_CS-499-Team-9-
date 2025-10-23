@@ -1,0 +1,1 @@
+export { default } from "../../components/friend_list_strand";

@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { Link, router } from "expo-router";
+import { useSession, SessionProvider } from "../../context/ctx";
 
 export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const { signIn } = useSession(); // Correct: Hook called at the top level
 
   const onLogin = async () => {
     // Front-end validation
@@ -14,19 +16,19 @@ export default function LoginScreen() {
 
     setSubmitting(true);
     try {
-      // --- Potential backend call (commented) ---
-      // const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/login`, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ username, password }),
-      // });
-      // if (!res.ok) throw new Error("Invalid credentials");
-      // const data = await res.json();
-      // // store token (e.g., SecureStore) and go to the app
-      // await SecureStore.setItemAsync("token", data.token);
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-      // Purely front-end: pretend success + navigate
-      router.replace("(tabs)");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Invalid credentials");
+      }
+
+      // Use the token from the API response to sign in
+      await signIn(data.token);
     } catch (e: any) {
       Alert.alert("Login failed", e?.message ?? "Please try again.");
     } finally {
@@ -35,6 +37,7 @@ export default function LoginScreen() {
   };
 
   return (
+    <SessionProvider>
     <KeyboardAvoidingView style={styles.container} behavior={Platform.select({ ios: "padding", android: undefined })}>
       <View style={styles.card}>
         <Text style={styles.title}>Welcome back</Text>
@@ -43,12 +46,16 @@ export default function LoginScreen() {
           style={styles.input}
           placeholder="Username"
           autoCapitalize="none"
+          textContentType="username" // For iOS autofill
+          autoComplete="username" // For Android autofill
           value={username}
           onChangeText={setUsername}
         />
         <TextInput
           style={styles.input}
           placeholder="Password"
+          textContentType="password" // For iOS autofill
+          autoComplete="password" // For Android autofill
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -70,6 +77,7 @@ export default function LoginScreen() {
         </Text>
       </View>
     </KeyboardAvoidingView>
+    </SessionProvider>
   );
 }
 
