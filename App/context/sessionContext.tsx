@@ -35,6 +35,7 @@ export function SessionProvider(props: { children: React.ReactNode }) {
 
         // const storedSession = await SecureStore.getItemAsync(SESSION_KEY); // This line is redundant and causes the error
         if (storedSession) {
+          console.log('restoring session')
           setSession(storedSession);
         }
       } catch (e) {
@@ -63,6 +64,7 @@ export function SessionProvider(props: { children: React.ReactNode }) {
       },
       signOut: async () => {
         setSession(null);
+        console.log("Signing out, clearing session");
         try {
           if (Platform.OS !== 'web') {
             await SecureStore.deleteItemAsync(SESSION_KEY);
