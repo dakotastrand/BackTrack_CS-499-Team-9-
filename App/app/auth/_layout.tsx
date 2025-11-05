@@ -4,7 +4,7 @@ import {SessionProvider} from "context/sessionContext";
 export default function AuthLayout() {
     return (
         <SessionProvider>
-            <Stack screenOptions={{ headerTitleAlign: "center" }}>
+            <Stack screenOptions={{ headerTitleAlign: "center", headerShown: false }}>
                 <Stack.Screen name="login" options={{ title: "Login" }} />
                 <Stack.Screen name="register" options={{ title: "Register" }} />
             </Stack>

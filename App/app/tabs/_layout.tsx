@@ -1,9 +1,11 @@
+import { FriendsProvider } from '@/context/friendContext';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: 'blue' }}>
+    <FriendsProvider>
+    <Tabs screenOptions={{ tabBarActiveTintColor: 'blue', headerShown: false }}>
       <Tabs.Screen
         name="home"
         options={{
@@ -33,5 +35,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </FriendsProvider>
   );
 }

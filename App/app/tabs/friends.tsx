@@ -9,7 +9,7 @@ import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, 
 import { useFriends } from "hooks/useFriends";
 import { useRouter } from "expo-router";
 
-export default function FriendListStrand() {
+export default function FriendsList() {
   const { friends, addFriend, removeFriend, toggleFavorite } = useFriends();
   const [newFriend, setNewFriend] = useState("");
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
@@ -27,7 +27,7 @@ export default function FriendListStrand() {
       return;
     }
     Alert.alert(`Friends notified: ${selectedFriends.join(", ")}`);
-    router.push("/timer_screen_strand"); // go back to timer
+    router.replace("/tabs/timer"); // go back to timer
   };
 
   return (
@@ -83,7 +83,7 @@ export default function FriendListStrand() {
       />
 
       <Button title="Notify Selected Friends" onPress={handleNotify} color="green" />
-      <Button title="Back to Timer" onPress={() => router.push("/timer_screen_strand")} color="darkgreen" />
+      <Button title="Back to Timer" onPress={() => router.replace("/tabs/timer")} color="darkgreen" />
     </View>
   );
 }

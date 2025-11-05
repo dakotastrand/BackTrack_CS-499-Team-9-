@@ -83,7 +83,7 @@ export default function RegisterScreen() {
 
         <Text style={styles.footerText}>
           Already have an account?{" "}
-          <Link href="/(auth)/login" style={styles.link}>
+          <Link href="/auth/login" style={styles.link}>
             Sign in
           </Link>
         </Text>

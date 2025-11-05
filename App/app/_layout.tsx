@@ -1,11 +1,14 @@
 import React from "react";
 import { Stack } from "expo-router";
-import { AuthProvider } from "context/authContext";
+import { SessionProvider } from "context/sessionContext";
+import ThemeProvider from "@/context/themeContext";
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <Stack />
-    </AuthProvider>
+    <SessionProvider>
+      <ThemeProvider>
+        <Stack />
+      </ThemeProvider>
+    </SessionProvider>
   );
 }

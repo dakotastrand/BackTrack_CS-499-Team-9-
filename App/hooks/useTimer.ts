@@ -7,7 +7,8 @@ import useWebSocket from "./useWebSocket";
 export function useTimer() {
   const [timer, setTimer] = useState<number | null>(null);
   const socket = useWebSocket(
-    process.env.EXPO_PUBLIC_API_URL
+    process.env.EXPO_PUBLIC_API_URL,
+    () => setTimer(null)
   )
 
   const startTimer = (minutes: number) => {
