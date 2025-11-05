@@ -1,9 +1,3 @@
-/**
- * filename: friend_list_strand.tsx
- * author: Dakota Strand
- * description: friend list screen with add/remove, favorite, and selection functionality
- */
-
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { useFriends } from "hooks/useFriends";

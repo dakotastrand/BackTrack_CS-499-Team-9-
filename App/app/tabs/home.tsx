@@ -3,7 +3,6 @@ import { View, Text, StyleSheet } from "react-native";
 import { Link } from "expo-router";
 
 export default function HomeScreen() {
-  // TODO: find out why the hrefs hate me
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome</Text>

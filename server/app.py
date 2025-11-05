@@ -17,8 +17,8 @@ load_dotenv()
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db') # Default to SQLite if not set
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db')
 
 # Initialize SQLAlchemy without the app first to avoid circular imports
 db = SQLAlchemy()
