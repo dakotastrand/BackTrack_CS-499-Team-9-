@@ -14,7 +14,7 @@ export function useTimer() {
   const startTimer = (minutes: number) => {
     console.log("Starting timer for", minutes, "minutes");
     setTimer(minutes);
-    socket?.emit("data", "hello world")
+    socket?.emit("startTimer", minutes)
   };
 
   const extendTimer = (minutes: number) => {
