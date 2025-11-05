@@ -30,7 +30,7 @@ export default function RegisterScreen() {
       }
 
       Alert.alert("Success", "Account created successfully! Please log in.");
-      router.replace("/(auth)/login"); // Redirect to login screen
+      router.replace("/auth/login"); // Redirect to login screen
     } catch (e: any) {
       Alert.alert("Registration failed", e?.message ?? "Please try again.");
     } finally {

@@ -22,7 +22,7 @@ export default function LoginScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-
+      
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "Invalid credentials");
@@ -30,6 +30,7 @@ export default function LoginScreen() {
 
       // Use the token from the API response to sign in
       await signIn(data.token);
+      router.push("/tabs/home");
     } catch (e: any) {
       Alert.alert("Login failed", e?.message ?? "Please try again.");
     } finally {
@@ -72,7 +73,7 @@ export default function LoginScreen() {
 
         <Text style={styles.footerText}>
           New here?{" "}
-          <Link href="/(auth)/register" style={styles.link}>
+          <Link href="/auth/register" style={styles.link}>
             Create an account
           </Link>
         </Text>
