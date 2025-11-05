@@ -1,9 +1,3 @@
-/**
- * filename: use_auth_strand.tsx
- * author: Dakota Strand
- * description: authentication context and hook with signup & forgot password
- */
-
 import React, { createContext, useContext, useState, ReactNode } from "react";
 
 interface AuthContextType {
@@ -17,7 +11,7 @@ interface AuthContextType {
 
 interface AuthProviderProps { children: ReactNode; }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -40,8 +34,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 }
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
-  return context;
-};
+

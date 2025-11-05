@@ -12,19 +12,7 @@ interface SessionContextType {
 }
 
 // Create the context with a default undefined value
-const SessionContext = createContext<SessionContextType | undefined>(undefined);
-
-/**
- * A custom hook to access the session context.
- * Throws an error if used outside of a SessionProvider.
- */
-export function useSession() {
-  const context = useContext(SessionContext);
-  if (context === undefined) {
-    throw new Error("useSession must be used within a SessionProvider");
-  }
-  return context;
-}
+export const SessionContext = createContext<SessionContextType | null>(null);
 
 /**
  * The provider component that wraps the app and manages the session state.

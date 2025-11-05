@@ -19,7 +19,7 @@ interface FriendsContextType {
   toggleFavorite: (name: string) => void;
 }
 
-const FriendsContext = createContext<FriendsContextType | null>(null);
+export const FriendsContext = createContext<FriendsContextType | null>(null);
 
 interface FriendsProviderProps {
   children: ReactNode;
@@ -46,9 +46,3 @@ export function FriendsProvider({ children }: FriendsProviderProps) {
     </FriendsContext.Provider>
   );
 }
-
-export const useFriends = () => {
-  const context = useContext(FriendsContext);
-  if (!context) throw new Error("useFriends must be used within FriendsProvider");
-  return context;
-};
