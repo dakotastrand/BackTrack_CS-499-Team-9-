@@ -1,7 +1,7 @@
 import {useState, useEffect} from 'react';
 import {io, Socket} from 'socket.io-client';
 
-export default function useWebSocket(url: string | undefined, completeTimerCallback: () => void) {
+export default function useWebSocket(url: string | undefined) {
     const [socket, setSocket] = useState<Socket | null>(null);
 
     useEffect(() => {
@@ -24,11 +24,6 @@ export default function useWebSocket(url: string | undefined, completeTimerCallb
         socketClient.on('disconnect', () => {
             console.log('Disconnected from server');
         });
-
-        socketClient.on('timerComplete', () => {
-            console.log('Timer completed');
-            completeTimerCallback();
-        })
 
         setSocket(socketClient);
 

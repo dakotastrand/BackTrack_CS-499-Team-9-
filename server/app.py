@@ -11,8 +11,7 @@ import uuid
 import jwt
 import os
 from datetime import datetime, timedelta
-
-import time, threading
+import json
 
 app = Flask(__name__)
 # # Enable CORS to allow API requests from other origins (like a mobile app)
@@ -253,18 +252,3 @@ def disconnect():
 @socket_app.on("data")
 def handle_message(data):
     print(f'Client sent data on socket: {str(data)}')
-
-@socket_app.on("startTimer")
-def start_timer(data):
-    print(f'Client sent data on socket: {str(data)}')
-    try:
-        minutes = float(data)
-    except ValueError:
-        print('Invalid message sent by client')
-
-    def handle_timer_timeout(sid=[]):
-        print(f"Finished timer sent by {sid}")
-        socket_app.emit("timerComplete", f"{sid}")
-
-    threading.Timer(minutes * 60.0, handle_timer_timeout, [request.sid]).start()
-    
