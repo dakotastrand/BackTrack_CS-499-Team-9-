@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
-import { useSession } from "../../context/ctx";
+import { useSession } from "hooks/useSession";
 
 export default function SettingsScreen() {
   const { signOut } = useSession();

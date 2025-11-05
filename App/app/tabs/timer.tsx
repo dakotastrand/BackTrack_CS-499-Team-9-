@@ -3,9 +3,9 @@
 
 import React, { useState } from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
-import { useTimer } from "../../hooks/useTimer";
+import { useTimer } from "hooks/useTimer";
 
-export default function TimerScreen(props: any) {
+export default function TimerScreen() {
   const { timer, startTimer, extendTimer, cancelTimer } = useTimer();
   const [duration] = useState<number>(0.1); // Default timer: 5 minutes
 

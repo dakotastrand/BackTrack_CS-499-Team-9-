@@ -6,7 +6,7 @@
 
 import React, { useState } from "react";
 import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, Alert } from "react-native";
-import { useFriends } from "hooks/use_friends_strand";
+import { useFriends } from "hooks/useFriends";
 import { useRouter } from "expo-router";
 
 export default function FriendListStrand() {

@@ -1,18 +1,11 @@
-/**
- * filename: index.tsx
- * author: Team 9 // Dakota Strand,
- * description: redirect to login or timer screen based on login state
- */
-
 import { Redirect } from "expo-router";
-import { useAuth } from "hooks/use_auth_strand";
+import { useAuth } from "hooks/useAuth";
 
 export default function Index() {
   const { isLoggedIn } = useAuth();
-
+  const route = isLoggedIn ? "tabs/home" : "auth/login";
+  console.log(`Routing user to ${route}`);
   return (
-    <Redirect
-      href={isLoggedIn ? "/timer_screen_strand" : "/login_screen_strand"}
-    />
+    <Redirect href={`/${route}`}/>
   );
 }

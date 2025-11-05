@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { Link, router } from "expo-router";
-import { useSession, SessionProvider } from "../../context/ctx";
+import { SessionProvider } from "context/sessionContext";
+import { useSession } from "hooks/useSession";
 
 export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { signIn } = useSession(); // Correct: Hook called at the top level
+  const { signIn } = useSession();
 
   const onLogin = async () => {
     // Front-end validation

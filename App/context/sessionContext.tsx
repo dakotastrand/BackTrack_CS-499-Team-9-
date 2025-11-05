@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, createContext, useMemo } from "react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
@@ -47,7 +47,7 @@ export function SessionProvider(props: { children: React.ReactNode }) {
     loadSession();
   }, []);
 
-  const value = React.useMemo(
+  const value = useMemo(
     () => ({
       signIn: async (sessionData: string) => {
         setSession(sessionData);
