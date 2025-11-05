@@ -1,5 +1,3 @@
-// hooks/useFriends.ts
-
 import { useState, useCallback } from "react";
 
 export function useFriends() {
@@ -30,8 +28,4 @@ export function useFriends() {
   }, []);
 
   return { friends, addFriend, removeFriend };
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 73d13532ad4b393cf28a807257eceea3c352349a
