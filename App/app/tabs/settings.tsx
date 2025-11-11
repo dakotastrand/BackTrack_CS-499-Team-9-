@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { useSession } from "hooks/useSession";
+import { router } from "expo-router";
 
 export default function SettingsScreen() {
   const { signOut } = useSession();
@@ -7,7 +8,10 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Settings</Text>
       <Text style={styles.subtitle}>Manage your app preferences here.</Text>
-      <Pressable onPress={() => signOut()} style={styles.button}>
+      <Pressable onPress={() => {
+        signOut();
+        router.replace("/auth/login");
+      }} style={styles.button}>
         <Text style={styles.buttonText}>Sign Out</Text>
       </Pressable>
     </View>
