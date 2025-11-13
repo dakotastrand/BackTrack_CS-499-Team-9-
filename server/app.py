@@ -22,6 +22,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sq
 from table import User, Friend, Alert, AlertRecipient, Record, db
 db.init_app(app) # Now initialize db with the app
 
+with app.app_context():
+    db.create_all()
+
 # Initialize Flask-Migrate
 migrate = Migrate(app, db)
 
