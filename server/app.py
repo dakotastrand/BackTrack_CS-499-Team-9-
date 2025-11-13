@@ -4,7 +4,6 @@ eventlet.monkey_patch()
 import os
 from datetime import datetime, timedelta, timezone
 from flask import Flask, render_template, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 from flask_migrate import Migrate
 from flask_socketio import SocketIO, emit
@@ -20,11 +19,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db')
 
-# Initialize SQLAlchemy without the app first to avoid circular imports
-db = SQLAlchemy()
-
-# Import models AFTER db is defined, but BEFORE db.init_app(app)
-from table import User, Friend, Alert, AlertRecipient, Record
+from table import User, Friend, Alert, AlertRecipient, Record, db
 db.init_app(app) # Now initialize db with the app
 
 # Initialize Flask-Migrate
