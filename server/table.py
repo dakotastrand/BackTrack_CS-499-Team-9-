@@ -17,6 +17,8 @@ class Friend(db.Model):
     friend_id = db.Column(db.String(80), primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id_1 = db.Column(db.String(80), db.ForeignKey('user.user_id'), nullable=False)
     user_id_2 = db.Column(db.String(80), db.ForeignKey('user.user_id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='accepted')
+    favorite = db.Column(db.Boolean, default=False)
     
     def __repr__(self):
         return f'<Friends_list {self.user_id_1} {self.user_id_2}>'
