@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, createContext, useMemo } from "react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
@@ -12,19 +12,7 @@ interface SessionContextType {
 }
 
 // Create the context with a default undefined value
-const SessionContext = createContext<SessionContextType | undefined>(undefined);
-
-/**
- * A custom hook to access the session context.
- * Throws an error if used outside of a SessionProvider.
- */
-export function useSession() {
-  const context = useContext(SessionContext);
-  if (context === undefined) {
-    throw new Error("useSession must be used within a SessionProvider");
-  }
-  return context;
-}
+export const SessionContext = createContext<SessionContextType | null>(null);
 
 /**
  * The provider component that wraps the app and manages the session state.
@@ -47,6 +35,7 @@ export function SessionProvider(props: { children: React.ReactNode }) {
 
         // const storedSession = await SecureStore.getItemAsync(SESSION_KEY); // This line is redundant and causes the error
         if (storedSession) {
+          console.log('restoring session')
           setSession(storedSession);
         }
       } catch (e) {
@@ -59,7 +48,7 @@ export function SessionProvider(props: { children: React.ReactNode }) {
     loadSession();
   }, []);
 
-  const value = React.useMemo(
+  const value = useMemo(
     () => ({
       signIn: async (sessionData: string) => {
         setSession(sessionData);
@@ -75,6 +64,7 @@ export function SessionProvider(props: { children: React.ReactNode }) {
       },
       signOut: async () => {
         setSession(null);
+        console.log("Signing out, clearing session");
         try {
           if (Platform.OS !== 'web') {
             await SecureStore.deleteItemAsync(SESSION_KEY);

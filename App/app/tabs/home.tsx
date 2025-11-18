@@ -7,10 +7,10 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Welcome</Text>
       <Text style={styles.subtitle}>You are logged in.</Text>
-      <Link href="/(tabs)/friends" style={styles.link}>
+      <Link href="/tabs/friends" style={styles.link}>
         Go to Friends
       </Link>
-      <Link href="/(tabs)/timer" style={styles.link}>
+      <Link href="/tabs/timer" style={styles.link}>
         Go to Timer
       </Link>
     </View>

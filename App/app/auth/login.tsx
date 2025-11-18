@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { Link, router } from "expo-router";
-import { useSession, SessionProvider } from "../../context/ctx";
+import { SessionProvider } from "context/sessionContext";
+import { useSession } from "hooks/useSession";
 
 export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { signIn } = useSession(); // Correct: Hook called at the top level
+  const { signIn } = useSession();
 
   const onLogin = async () => {
     // Front-end validation
@@ -21,7 +22,7 @@ export default function LoginScreen() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
-
+      
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "Invalid credentials");
@@ -29,6 +30,7 @@ export default function LoginScreen() {
 
       // Use the token from the API response to sign in
       await signIn(data.token);
+      router.push("/tabs/home");
     } catch (e: any) {
       Alert.alert("Login failed", e?.message ?? "Please try again.");
     } finally {
@@ -36,11 +38,19 @@ export default function LoginScreen() {
     }
   };
 
+  const handleForgotPassword = () => {
+    // TODO: handle forgot password logic
+    Alert.alert(
+      "Forgot Password",
+      "Password reset instructions would be sent to your email."
+    );
+  };
+
   return (
     <SessionProvider>
     <KeyboardAvoidingView style={styles.container} behavior={Platform.select({ ios: "padding", android: undefined })}>
       <View style={styles.card}>
-        <Text style={styles.title}>Welcome back</Text>
+        <Text style={styles.title}>Welcome to BackTrack</Text>
 
         <TextInput
           style={styles.input}
@@ -48,6 +58,7 @@ export default function LoginScreen() {
           autoCapitalize="none"
           textContentType="username" // For iOS autofill
           autoComplete="username" // For Android autofill
+          placeholderTextColor="#c0f0b3"
           value={username}
           onChangeText={setUsername}
         />
@@ -56,6 +67,7 @@ export default function LoginScreen() {
           placeholder="Password"
           textContentType="password" // For iOS autofill
           autoComplete="password" // For Android autofill
+          placeholderTextColor="#c0f0b3"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -71,23 +83,85 @@ export default function LoginScreen() {
 
         <Text style={styles.footerText}>
           New here?{" "}
-          <Link href="/(auth)/register" style={styles.link}>
+          <Link href="/auth/register" style={styles.link}>
             Create an account
           </Link>
+        </Text>
+        <Text style={styles.footerText}>
+          <Pressable onPress={handleForgotPassword}>
+            <Text style={styles.link}>Forgot Password?</Text>
+          </Pressable>
         </Text>
       </View>
     </KeyboardAvoidingView>
     </SessionProvider>
+
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24 },
-  card: { gap: 12, padding: 20, borderRadius: 16, borderWidth: StyleSheet.hairlineWidth },
-  title: { fontSize: 22, fontWeight: "600", textAlign: "center", marginBottom: 8 },
-  input: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 10, padding: 12, fontSize: 16 },
-  button: { marginTop: 8, borderRadius: 10, paddingVertical: 12, alignItems: "center", borderWidth: StyleSheet.hairlineWidth },
-  buttonText: { fontSize: 16, fontWeight: "600" },
-  footerText: { textAlign: "center", marginTop: 12 },
-  link: { textDecorationLine: "underline" },
+  container: {
+    flex: 1,
+    backgroundColor: "#0b2d0b", // dark green background
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  card: { 
+    gap: 12, 
+    padding: 20, 
+    borderRadius: 16, 
+    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderColor: "white", 
+    backgroundColor: "#004d00",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "white",
+    marginBottom: 20,
+  },
+  input: {
+    width: 200,
+    textAlign: "center",
+    borderWidth: 1,
+    borderColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+    padding: 12,
+    marginVertical: 10,
+    marginHorizontal: 20,
+    color: "white",
+  },
+  button: { 
+    width: 150,
+    borderWidth: 1,
+    borderColor: "green",
+    borderRadius: 10,
+    alignItems: "center", 
+    padding: 12,
+    marginTop: 16,
+    marginBottom: 6
+  },
+  buttonText: { 
+    fontSize: 16, 
+    fontWeight: "600",
+    color: "white",
+  },
+  footerText: { 
+    textAlign: "center", 
+    marginTop: 6,
+    color: "white",
+  },
+  link: { 
+    textDecorationLine: "underline" ,
+    color: "white",
+  },
+  bottomButtons: {
+    marginTop: 15,
+    width: "80%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
 });
