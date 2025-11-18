@@ -102,10 +102,13 @@ def login_user():
     if not user or not check_password_hash(user.password, password):
         return jsonify({'error': 'Invalid credentials'}), 401
 
-    token = jwt.encode({
+    # Create a token that expires in 24 hours
+    payload = {
         'user_id': user.user_id,
         'exp': datetime.now(timezone.utc) + timedelta(hours=24)
-    }, app.config['SECRET_KEY'], algorithm="HS256")
+    }
+
+    token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm="HS256")
 
     return jsonify({'token': token})
 

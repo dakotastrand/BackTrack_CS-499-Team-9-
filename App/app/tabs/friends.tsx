@@ -92,6 +92,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "white",
+    marginTop: 40,
     marginBottom: 10,
     alignSelf: "center",
   },
