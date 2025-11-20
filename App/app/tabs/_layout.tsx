@@ -1,10 +1,12 @@
 import { FriendsProvider } from '@/context/friendContext';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
+import { useSession } from 'hooks/useSession';
 
 export default function TabLayout() {
+  const { session } = useSession();
   return (
-    <FriendsProvider>
+    <FriendsProvider key={session}>
     <Tabs screenOptions={{ tabBarActiveTintColor: 'blue', headerShown: false }}>
       <Tabs.Screen
         name="home"

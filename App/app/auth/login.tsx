@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert, Image } from "react-native";
 import { Link, router } from "expo-router";
-import { SessionProvider } from "context/sessionContext";
 import { useSession } from "hooks/useSession";
 
 export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const { signIn } = useSession();
+  const { session, signIn } = useSession();
 
   const onLogin = async () => {
     if (!username.trim()) return Alert.alert("Please enter a username.");
@@ -23,8 +22,10 @@ export default function LoginScreen() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Invalid credentials");
-
+      
+      console.log("Login successful, received token: ", data.token);
       await signIn(data.token);
+      console.log("Current session after signIn: ", session);
       router.push("/tabs/home");
     } catch (e: any) {
       Alert.alert("Login failed", e?.message ?? "Please try again.");
@@ -41,7 +42,6 @@ export default function LoginScreen() {
   };
 
   return (
-    <SessionProvider>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.select({ ios: "padding", android: undefined })}
@@ -100,7 +100,6 @@ export default function LoginScreen() {
           </Text>
         </View>
       </KeyboardAvoidingView>
-    </SessionProvider>
   );
 }
 

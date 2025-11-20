@@ -17,13 +17,17 @@ export default function SettingsScreen() {
       <Text style={styles.title}>Settings</Text>
       <Text style={styles.subtitle}>Manage your app preferences here.</Text>
 
-      <Pressable
-        onPress={() => {
-          signOut();
-          router.replace("/auth/login");
-        }}
-        style={styles.button}
-      >
+            <Pressable
+
+              onPress={async () => {
+                await signOut();
+                router.replace("/auth/login");
+
+              }}
+
+              style={styles.button}
+
+            >
         <Text style={styles.buttonText}>Sign Out</Text>
       </Pressable>
     </View>

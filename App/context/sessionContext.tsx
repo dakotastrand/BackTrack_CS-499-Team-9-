@@ -21,37 +21,38 @@ export function SessionProvider(props: { children: React.ReactNode }) {
   const [session, setSession] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadSession() {
-      try {
-        let storedSession: string | null = null;
-        if (Platform.OS !== 'web') {
-          // Use SecureStore on native platforms
-          storedSession = await SecureStore.getItemAsync(SESSION_KEY);
-        } else {
-          // Use localStorage on the web
-          storedSession = localStorage.getItem(SESSION_KEY);
-        }
-
-        // const storedSession = await SecureStore.getItemAsync(SESSION_KEY); // This line is redundant and causes the error
-        if (storedSession) {
-          console.log('restoring session')
-          setSession(storedSession);
-        }
-      } catch (e) {
-        console.error("Failed to load session from secure storage", e);
-      } finally {
-        setIsLoading(false);
+  async function loadSession() {
+    try {
+      let storedSession: string | null = null;
+      if (Platform.OS !== 'web') {
+        // Use SecureStore on native platforms
+        storedSession = await SecureStore.getItemAsync(SESSION_KEY);
+      } else {
+        // Use localStorage on the web
+        storedSession = localStorage.getItem(SESSION_KEY);
       }
-    }
 
+      // const storedSession = await SecureStore.getItemAsync(SESSION_KEY); // This line is redundant and causes the error
+      if (storedSession) {
+        console.log('restoring session')
+        setSession(storedSession);
+      }
+    } catch (e) {
+      console.error("Failed to load session from secure storage", e);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
     loadSession();
   }, []);
 
   const value = useMemo(
     () => ({
       signIn: async (sessionData: string) => {
-        setSession(sessionData);
+        setSession(sessionData.toString());
+        console.log("Signing in, setting new session: ", sessionData);
         try {
           if (Platform.OS !== 'web') {
             await SecureStore.setItemAsync(SESSION_KEY, sessionData);
@@ -61,6 +62,7 @@ export function SessionProvider(props: { children: React.ReactNode }) {
         } catch (e) {
           console.error("Failed to save session", e);
         }
+        console.log("Session saved with token: ", session);
       },
       signOut: async () => {
         setSession(null);

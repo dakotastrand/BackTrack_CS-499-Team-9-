@@ -46,22 +46,25 @@ export function FriendsProvider({ children }: FriendsProviderProps) {
   // -------------------------------
   useEffect(() => {
     const loadFriends = async () => {
-      const token = session;
       try {
 
-        if (!token) {
+        console.log('loading friends with token:', session);
+
+        if (!session) {
+          console.log('bruh');
           setFriends([]);
           return;
         }
 
         const response = await fetch(`${API_URL}/api/friends`, {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${session}` },
         });
 
         const data = await safeJson(response);
 
         if (response.ok && Array.isArray(data)) {
           setFriends(data);
+          console.log("Friends loaded:", data);
         } else {
           console.error("Failed to fetch friends:", data?.message || data?.error || response.status);
           setFriends([]);
@@ -85,6 +88,7 @@ export function FriendsProvider({ children }: FriendsProviderProps) {
       return;
     }
 
+    console.log("Current friends: ", friends);
     if (friends.some(f => f.name.toLowerCase() === name.toLowerCase())) {
       alert("A friend with this name already exists.");
       return;
