@@ -1,18 +1,19 @@
-// Dakota Strand - Timer Screen Component
-// Allows user to set, extend, and cancel safety timers
-
 import React, { useEffect, useState } from "react";
 import { View, Text, Button, StyleSheet, Alert, TextInput, FlatList, TouchableOpacity } from "react-native";
 import { useTimer } from "hooks/useTimer";
 import { useFriends } from "hooks/useFriends";
+import { useSession } from "hooks/useSession";
+import { useRouter } from "expo-router";
 
 export default function TimerScreen() {
   const { timer, startTimer, extendTimer, cancelTimer } = useTimer();
   const { friends } = useFriends();
+  const { session } = useSession();
   const [duration, setDuration] = useState<number>(0.1); // Default timer: 5 minutes
   const [destination, setDestination] = useState("");
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [running, setRunning] = useState<boolean>(false);
+  const router = useRouter();
 
   const handleSelectFriend = (name: string) => {
     setSelectedFriends((prev) =>
@@ -20,7 +21,7 @@ export default function TimerScreen() {
     );
   };
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!destination.trim()) {
       Alert.alert("Please enter a destination.");
       return;
@@ -34,9 +35,34 @@ export default function TimerScreen() {
       return;
     }
 
-    startTimer(duration);
-    setRunning(true);
-    Alert.alert("Timer started", `Your friends will be notified if you don't check in!`);
+    try {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/alert`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session}`,
+        },
+        body: JSON.stringify({
+          message: destination,
+          duration: duration,
+          notified_friends: selectedFriends,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        Alert.alert("Error", errorData.error || "Failed to start timer.");
+        return;
+      }
+
+      startTimer(duration);
+      setRunning(true);
+      Alert.alert("Timer started", `Your friends will be notified if you don't check in!`);
+
+    } catch (error) {
+      console.error("Failed to start timer:", error);
+      Alert.alert("Error", "An unexpected error occurred.");
+    }
   };
 
   const handleCancel = () => {

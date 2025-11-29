@@ -85,8 +85,16 @@ def token_required(f):
 # -------------------------------------------------------------------
 @app.route('/')
 def index():
-    # A simple health-check endpoint.
-    return "Server is running."
+    records = db.session.query(
+        Record.record_id,
+        User.username,
+        Alert.message.label('alert_message'),
+        Record.time_stamp
+    ).join(User, Record.user_id == User.user_id).join(Alert, Record.alert_id == Alert.alert_id).all()
+    
+    users = User.query.all()  # For the debugging table
+
+    return render_template('index.html', records=records, users=users)
 
 @app.route('/api/login', methods=['POST'])
 def login_user():
@@ -159,6 +167,21 @@ def disconnect():
 def start_timer(data):
     print(f'Client sent data on socket: {str(data)}')
     # This is where you would add your timer logic.
+    try: # It's better to be specific about the data structure you expect
+        minutes = float(data)
+    except ValueError:
+        print(f'Invalid timer duration received from client {request.sid}: {data}')
+        return # Ignore invalid data
+
+    def timer_task(sid, duration_minutes):
+        """Background task to wait and then notify the client."""
+        print(f"Timer started for {duration_minutes} minutes for client {sid}.")
+        eventlet.sleep(duration_minutes * 60) # redo this to be a separate thread. eventlet.sleep is non-blocking, # the timer still wokrs even if app is closed, #past the presentation
+        print(f"Timer finished for client {sid}.")
+        socket_app.emit("timerComplete", room=sid)
+
+    # Use socket_app.start_background_task for safe background jobs with eventlet
+    socket_app.start_background_task(target=timer_task, sid=request.sid, duration_minutes=minutes)
 
 # -------------------------------------------------------------------
 # FRIENDS ROUTES
@@ -277,3 +300,79 @@ def toggle_favorite(current_user, username):
     db.session.commit()
 
     return jsonify({"message": "Favorite updated"}), 200
+
+
+# -------------------------------------------------------------------
+# ALERT ROUTES
+# -------------------------------------------------------------------
+@app.route("/api/alert", methods=["POST"])
+@token_required
+def create_alert(current_user):
+    data = request.get_json()
+    if not data or not 'message' in data or not 'duration' in data or not 'notified_friends' in data:
+        return jsonify({'error': 'Missing message, duration, or notified_friends'}), 400
+
+    message = data['message']
+    duration = data['duration']
+    notified_friends = data['notified_friends']
+
+    start_time = datetime.now(timezone.utc)
+    end_time = start_time + timedelta(minutes=duration)
+    total_time = end_time - start_time
+
+    new_alert = Alert(
+        user_id=current_user.user_id,
+        start_time=start_time,
+        end_time=end_time,
+        total_time=total_time,
+        status='active',
+        message=message
+    )
+    db.session.add(new_alert)
+    db.session.commit()
+
+    for friend_username in notified_friends:
+        friend = User.query.filter_by(username=friend_username).first()
+        if friend:
+            friendship = Friend.query.filter(
+                ((Friend.user_id_1 == current_user.user_id) & (Friend.user_id_2 == friend.user_id)) |
+                ((Friend.user_id_1 == friend.user_id) & (Friend.user_id_2 == current_user.user_id))
+            ).first()
+            if friendship:
+                new_alert_recipient = AlertRecipient(
+                    recipient_friend_id=friendship.friend_id,
+                    alert_id=new_alert.alert_id,
+                    notified_status='pending'
+                )
+                db.session.add(new_alert_recipient)
+    
+    db.session.commit()
+
+    return jsonify({'message': 'Alert created successfully', 'alert_id': new_alert.alert_id}), 201
+
+@app.route("/api/settings", methods=["GET"])
+@token_required
+def get_settings_data(current_user):
+    alerts = Alert.query.filter_by(user_id=current_user.user_id).all()
+    
+    settings_data = []
+    for alert in alerts:
+        recipients = AlertRecipient.query.filter_by(alert_id=alert.alert_id).all()
+        notified_friends = []
+        for recipient in recipients:
+            friendship = Friend.query.get(recipient.recipient_friend_id)
+            if friendship:
+                friend_user_id = friendship.user_id_1 if friendship.user_id_1 != current_user.user_id else friendship.user_id_2
+                friend_user = User.query.get(friend_user_id)
+                if friend_user:
+                    notified_friends.append(friend_user.username)
+        
+        settings_data.append({
+            'message': alert.message,
+            'duration': alert.total_time.total_seconds() / 60,  # duration in minutes
+            'status': alert.status,
+            'notified_friends': notified_friends,
+            'start_time': alert.start_time.isoformat()
+        })
+        
+    return jsonify(settings_data), 200

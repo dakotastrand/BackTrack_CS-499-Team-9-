@@ -7,27 +7,25 @@
 {% block body %}
 
 <div class="content">
-    <h1>Task Master</h1>
+    <h1>Records</h1>
 
-    {% if tasks|length < 1 %}
-    <h4>There are no tasks. Create one below!</h4>
+    {% if records|length < 1 %}
+    <h4>There are no records.</h4>
     {% else %}
 
     <table>
         <tr>
-            <th>Task</th>
-            <th>Added</th>
-            <th>Actions</th>
+            <th>Record ID</th>
+            <th>Username</th>
+            <th>Alert Message</th>
+            <th>Timestamp</th>
         </tr>
-        {% for task in tasks %}
+        {% for record in records %}
         <tr>
-            <td>{{ task.content }}</td>
-            <td>{{ task.date_created.date() }}</td>
-            <td>
-                <a href="/delete/{{task.id}}">Delete</a>
-                <br>
-                <a href="/update/{{task.id}}">Update</a>
-            </td>
+            <td>{{ record.record_id }}</td>
+            <td>{{ record.username }}</td>
+            <td>{{ record.alert_message }}</td>
+            <td>{{ record.time_stamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
         </tr>
         {% endfor %}
     </table>
@@ -53,12 +51,6 @@
 </table>
 
 
-    <div class="form">
-        <form action="/" method="POST">
-            <input type="text" name="content" id="content">
-            <input type="submit" value="Add Task">
-        </form>
-    </div>
 </div>
 
 {% endblock %}

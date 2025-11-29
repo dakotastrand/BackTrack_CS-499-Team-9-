@@ -1,10 +1,55 @@
-import React from "react";
-import { View, Text, StyleSheet, Pressable, Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, Pressable, Image, FlatList } from "react-native";
 import { useSession } from "hooks/useSession";
 import { router } from "expo-router";
 
+
+interface Alert {
+  message: string;
+  duration: number;
+  status: string;
+  notified_friends: string[];
+  start_time: string;
+}
+
 export default function SettingsScreen() {
-  const { signOut } = useSession();
+  const { signOut, session } = useSession();
+  const [settings, setSettings] = useState<Alert[]>([]);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/settings`, {
+          headers: {
+            Authorization: `Bearer ${session}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSettings(data);
+        } else {
+          console.error("Failed to fetch settings");
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
+
+    if (session) {
+      fetchSettings();
+    }
+  }, [session]);
+
+  const renderAlert = ({ item }: { item: Alert }) => (
+    <View style={styles.alertContainer}>
+      <Text style={styles.alertText}>Destination: {item.message}</Text>
+      <Text style={styles.alertText}>Duration: {item.duration} minutes</Text>
+      <Text style={styles.alertText}>Status: {item.status}</Text>
+      <Text style={styles.alertText}>Notified Friends: {item.notified_friends.join(", ")}</Text>
+      <Text style={styles.alertText}>Time: {new Date(item.start_time).toLocaleString()}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       {/* Background flowers */}
@@ -16,6 +61,13 @@ export default function SettingsScreen() {
 
       <Text style={styles.title}>Settings</Text>
       <Text style={styles.subtitle}>Manage your app preferences here.</Text>
+
+      <FlatList
+        data={settings}
+        renderItem={renderAlert}
+        keyExtractor={(item, index) => index.toString()}
+        style={styles.list}
+      />
 
             <Pressable
 
@@ -79,6 +131,23 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     zIndex: 1,
   },
+  list: {
+    width: '100%',
+    marginTop: 20,
+  },
+  alertContainer: {
+    backgroundColor: 'rgba(0, 100, 0, 0.3)',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'green',
+  },
+  alertText: {
+    color: 'white',
+    fontSize: 16,
+    marginBottom: 5,
+  },
   button: {
     backgroundColor: "green",
     paddingVertical: 12,
@@ -89,6 +158,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: 200,
     zIndex: 1,
+    marginTop: 20,
   },
   buttonText: {
     fontSize: 18,
