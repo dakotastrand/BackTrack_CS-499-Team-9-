@@ -1,5 +1,17 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { useFriends } from "hooks/useFriends";
 import { useRouter } from "expo-router";
 
@@ -21,71 +33,87 @@ export default function FriendsList() {
       return;
     }
     Alert.alert(`Friends notified: ${selectedFriends.join(", ")}`);
-    router.replace("/tabs/timer"); // go back to timer
+    router.replace("/tabs/timer");
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Your Friends</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={styles.container}>
+          <Text style={styles.title}>Your Friends</Text>
 
-      <FlatList
-        data={friends}
-        keyExtractor={(item) => item.name}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.friendItem,
-              selectedFriends.includes(item.name) && styles.selectedFriend,
-            ]}
-            onPress={() => handleSelectFriend(item.name)}
-          >
-            <Text style={styles.friendText}>
-              {item.name} {item.favorite ? "★" : ""}
-            </Text>
-            <View style={styles.friendButtons}>
-              <Button
-                title={item.favorite ? "Unfavorite" : "Favorite"}
-                onPress={() => toggleFavorite(item.name)}
-                color="green"
-              />
-              <Button
-                title="Remove"
-                onPress={() => removeFriend(item.name)}
-                color="darkgreen"
-              />
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+          <FlatList
+            data={friends}
+            keyExtractor={(item) => item.name}
+            contentContainerStyle={{ paddingBottom: 250 }} // ensures space for bottom buttons + tab bar
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.friendItem,
+                  selectedFriends.includes(item.name) && styles.selectedFriend,
+                ]}
+                onPress={() => handleSelectFriend(item.name)}
+              >
+                <Text style={styles.friendText}>
+                  {item.name} {item.favorite ? "★" : ""}
+                </Text>
+                <View style={styles.friendButtons}>
+                  <Button
+                    title={item.favorite ? "Unfavorite" : "Favorite"}
+                    onPress={() => toggleFavorite(item.name)}
+                    color="green"
+                  />
+                  <Button
+                    title="Remove"
+                    onPress={() => removeFriend(item.name)}
+                    color="darkgreen"
+                  />
+                </View>
+              </TouchableOpacity>
+            )}
+          />
 
-      <TextInput
-        style={styles.input}
-        placeholder="Add friend"
-        placeholderTextColor="#c0f0b3"
-        value={newFriend}
-        onChangeText={setNewFriend}
-      />
-      <Button
-        title="Add Friend"
-        onPress={() => {
-          if (newFriend.trim() !== "") {
-            addFriend(newFriend.trim());
-            setNewFriend("");
-          }
-        }}
-        color="green"
-      />
-
-      <Button title="Notify Selected Friends" onPress={handleNotify} color="green" />
-      <Button title="Back to Timer" onPress={() => router.replace("/tabs/timer")} color="darkgreen" />
-    </View>
+          <View style={[styles.bottomContainer, { marginBottom: 20 }]}>
+            <TextInput
+              style={styles.input}
+              placeholder="Add friend"
+              placeholderTextColor="#c0f0b3"
+              value={newFriend}
+              onChangeText={setNewFriend}
+            />
+            <Button
+              title="Add Friend"
+              onPress={() => {
+                if (newFriend.trim() !== "") {
+                  addFriend(newFriend.trim());
+                  setNewFriend("");
+                }
+              }}
+              color="green"
+            />
+            <Button title="Notify Selected Friends" onPress={handleNotify} color="green" />
+            <Button
+              title="Back to Timer"
+              onPress={() => router.replace("/tabs/timer")}
+              color="darkgreen"
+            />
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#0b2d0b", // dark green
+  },
   container: {
     flex: 1,
-    backgroundColor: "#0b2d0b", // dark green background
     padding: 20,
   },
   title: {
@@ -124,5 +152,8 @@ const styles = StyleSheet.create({
   friendButtons: {
     flexDirection: "row",
     gap: 5,
+  },
+  bottomContainer: {
+    paddingTop: 10,
   },
 });

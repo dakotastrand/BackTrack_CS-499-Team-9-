@@ -69,17 +69,13 @@ export default function SettingsScreen() {
         style={styles.list}
       />
 
-            <Pressable
-
-              onPress={async () => {
-                await signOut();
-                router.replace("/auth/login");
-
-              }}
-
-              style={styles.button}
-
-            >
+      <Pressable
+        onPress={async () => {
+          await signOut();
+          router.replace("/auth/login");
+        }}
+        style={styles.button}
+      >
         <Text style={styles.buttonText}>Sign Out</Text>
       </Pressable>
     </View>
