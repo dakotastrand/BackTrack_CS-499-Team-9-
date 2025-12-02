@@ -1,15 +1,24 @@
-// Dakota Strand - Timer Screen Component
-// Allows user to set, extend, and cancel safety timers
-
 import React, { useEffect, useState } from "react";
-import { View, Text, Button, StyleSheet, Alert, TextInput, FlatList, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  Button,
+  StyleSheet,
+  Alert,
+  TextInput,
+  FlatList,
+  TouchableOpacity,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { useTimer } from "hooks/useTimer";
 import { useFriends } from "hooks/useFriends";
 
 export default function TimerScreen() {
   const { timer, startTimer, extendTimer, cancelTimer } = useTimer();
   const { friends } = useFriends();
-  const [duration, setDuration] = useState<number>(0.1); // Default timer: 5 minutes
+  const [duration, setDuration] = useState<number>(0.1);
   const [destination, setDestination] = useState("");
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [running, setRunning] = useState<boolean>(false);
@@ -42,7 +51,7 @@ export default function TimerScreen() {
   const handleCancel = () => {
     cancelTimer();
   };
- 
+
   useEffect(() => {
     if (!timer && running) {
       Alert.alert(
@@ -54,59 +63,72 @@ export default function TimerScreen() {
   }, [timer]);
 
   return (
-     <View style={styles.container}>
-       <Text style={styles.title}>BackTrack Timer</Text>
- 
-       <TextInput
-         style={styles.input}
-         placeholder="Where are you going?"
-         placeholderTextColor="#c0f0b3"
-         value={destination}
-         onChangeText={(newDestination) => setDestination(newDestination)}
-       />
- 
-       <TextInput
-         style={styles.input}
-         placeholder="Duration (minutes)"
-         placeholderTextColor="#c0f0b3"
-         onChangeText={(newDuration) => setDuration(Number(newDuration))}
-         keyboardType="numeric"
-       />
- 
-       <Text style={styles.subtitle}>Select Friends to Notify:</Text>
-       <FlatList
-         data={friends}
-         keyExtractor={(item) => item.name}
-         renderItem={({ item }) => (
-           <TouchableOpacity
-             style={[
-               styles.friendItem,
-               selectedFriends.includes(item.name) && styles.selectedFriend,
-             ]}
-             onPress={() => handleSelectFriend(item.name)}
-           >
-             <Text style={styles.friendText}>
-               {item.name} {item.favorite ? "★" : ""}
-             </Text>
-           </TouchableOpacity>
-         )}
-       />
- 
-       <Text style={styles.timerText}>{timer ? `${duration} m remaining` : "Timer not running"}</Text>
- 
-       <View style={styles.buttons}>
-         <Button title="Start" onPress={handleStart} color="green" />
-         <Button title="Cancel" onPress={handleCancel} color="darkgreen" />
-         <Button title="Extend" onPress={() => extendTimer(5)} color="green" />
-       </View>
-     </View>
-   );
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={styles.container}>
+          <Text style={styles.title}>BackTrack Timer</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Where are you going?"
+            placeholderTextColor="#c0f0b3"
+            value={destination}
+            onChangeText={(newDestination) => setDestination(newDestination)}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Duration (minutes)"
+            placeholderTextColor="#c0f0b3"
+            onChangeText={(newDuration) => setDuration(Number(newDuration))}
+            keyboardType="numeric"
+          />
+
+          <Text style={styles.subtitle}>Select Friends to Notify:</Text>
+          <FlatList
+            data={friends}
+            keyExtractor={(item) => item.name}
+            contentContainerStyle={{ paddingBottom: 250 }} // space for buttons + tab bar
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[
+                  styles.friendItem,
+                  selectedFriends.includes(item.name) && styles.selectedFriend,
+                ]}
+                onPress={() => handleSelectFriend(item.name)}
+              >
+                <Text style={styles.friendText}>
+                  {item.name} {item.favorite ? "★" : ""}
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+
+          <Text style={styles.timerText}>
+            {timer ? `${duration} m remaining` : "Timer not running"}
+          </Text>
+
+          <View style={[styles.buttons, { marginBottom: 20 }]}>
+            <Button title="Start" onPress={handleStart} color="green" />
+            <Button title="Cancel" onPress={handleCancel} color="darkgreen" />
+            <Button title="Extend" onPress={() => extendTimer(5)} color="green" />
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: "#0b2d0b",
+  },
+  container: {
+    flex: 1,
     padding: 20,
   },
   title: {
@@ -114,6 +136,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "white",
     alignSelf: "center",
+    marginTop: 40,
     marginBottom: 15,
   },
   subtitle: {
