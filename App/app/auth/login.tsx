@@ -4,6 +4,7 @@ import { Link, router } from "expo-router";
 import { SessionProvider } from "context/sessionContext";
 import { useSession } from "hooks/useSession";
 
+
 export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -89,7 +90,7 @@ export default function LoginScreen() {
         </Text>
         <Text style={styles.footerText}>
           <Pressable onPress={handleForgotPassword}>
-            <Text style={styles.link}>Forgot Password?</Text>
+            <Link href="/auth/forgot" style={{ textDecorationLine: "underline", color: "white" }}>Forgot password?</Link>
           </Pressable>
         </Text>
       </View>

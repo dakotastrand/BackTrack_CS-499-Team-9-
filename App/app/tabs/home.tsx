@@ -1,6 +1,12 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Link } from "expo-router";
+import { useEffect } from "react";
+import { registerForPushNotificationsAsync } from "@/lib/push";
+import { useSession } from "hooks/useSession";
+
+
+
 
 export default function HomeScreen() {
   return (
