@@ -2,13 +2,30 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Link } from "expo-router";
 import { useEffect } from "react";
-import { registerForPushNotificationsAsync } from "@/lib/push";
+//import { registerForPushNotificationsAsync } from "lib/push";
 import { useSession } from "hooks/useSession";
+import firebase from "../../lib/firebase";
 
 
 
 
 export default function HomeScreen() {
+
+const { session } = useSession();
+/*
+  useEffect(() => {
+    // Only register once we know the user is logged in
+    if (!session) return;
+
+    (async () => {
+      try {
+        await registerForPushNotificationsAsync();
+      } catch (err) {
+        console.error("Failed to register for push notifications:", err);
+      }
+    })();
+  }, [session]);
+*/
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome</Text>
