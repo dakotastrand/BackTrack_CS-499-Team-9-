@@ -34,7 +34,8 @@ export default function TimerScreen() {
       return;
     }
 
-    startTimer(duration);
+    startTimer(duration, selectedFriends, destination);
+
     setRunning(true);
     Alert.alert("Timer started", `Your friends will be notified if you don't check in!`);
   };

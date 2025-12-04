@@ -1,15 +1,20 @@
-/*
+// App/lib/push.ts
 
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import Constants from "expo-constants";
 import firebase from "./firebase";
-import { getFirestore, doc, setDoc, serverTimestamp } from "firebase/firestore";
+import "firebase/compat/firestore";
 
-const db = getFirestore();
+const db = firebase.firestore();
 
-export async function registerForPushNotificationsAsync() {
+/**
+ * Registers the device for push notifications and stores the Expo push token
+ * in Firestore under:
+ *   users/{username}/pushTokens/{token}
+ */
+export async function registerForPushNotificationsAsync(username: string) {
   if (!Device.isDevice) {
     console.log("Push notifications only work on physical devices.");
     return null;
@@ -28,7 +33,7 @@ export async function registerForPushNotificationsAsync() {
     return null;
   }
 
-  //Get Expo push token – projectId is needed for EAS builds
+  // Get Expo push token – projectId is needed for EAS builds
   const projectId =
     Constants.expoConfig?.extra?.eas?.projectId ??
     Constants.easConfig?.projectId;
@@ -52,20 +57,22 @@ export async function registerForPushNotificationsAsync() {
     });
   }
 
-  //Save token to Firestore under the user
-  const uid = auth.currentUser?.uid;
-  if (uid && token) {
-    await setDoc(
-      doc(db, "users", uid, "pushTokens", token), // one doc per device token
-      {
-        token,
-        platform: Platform.OS,
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
+  // Save token to Firestore under the user
+  if (username && token) {
+    await db
+      .collection("users")
+      .doc(username)
+      .collection("pushTokens")
+      .doc(token)
+      .set(
+        {
+          token,
+          platform: Platform.OS,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
   }
 
   return token;
 }
-*/

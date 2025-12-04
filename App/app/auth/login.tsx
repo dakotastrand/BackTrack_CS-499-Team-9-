@@ -3,6 +3,8 @@ import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Pla
 import { Link, router } from "expo-router";
 import { SessionProvider } from "context/sessionContext";
 import { useSession } from "hooks/useSession";
+import { registerForPushNotificationsAsync } from "../../lib/push";
+
 
 
 export default function LoginScreen() {
@@ -31,6 +33,9 @@ export default function LoginScreen() {
 
       // Use the token from the API response to sign in
       await signIn(data.token);
+      // Register this device's push token under the username
+      await registerForPushNotificationsAsync(username.trim());
+      
       router.push("/tabs/home");
     } catch (e: any) {
       Alert.alert("Login failed", e?.message ?? "Please try again.");
