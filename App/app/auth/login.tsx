@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform, Alert } from "react-native";
 import { Link, router } from "expo-router";
-import { SessionProvider } from "context/sessionContext";
 import { useSession } from "hooks/useSession";
-import { registerForPushNotificationsAsync } from "../../lib/push";
 
 
 
@@ -31,12 +29,12 @@ export default function LoginScreen() {
         throw new Error(data.error || "Invalid credentials");
       }
 
-      // Use the token from the API response to sign in
-      await signIn(data.token);
-      // Register this device's push token under the username
-      await registerForPushNotificationsAsync(username.trim());
-      
+       // Use the token from the API response to sign in
+      await signIn(data.token, username.trim());
+
+
       router.push("/tabs/home");
+
     } catch (e: any) {
       Alert.alert("Login failed", e?.message ?? "Please try again.");
     } finally {
@@ -53,7 +51,6 @@ export default function LoginScreen() {
   };
 
   return (
-    <SessionProvider>
     <KeyboardAvoidingView style={styles.container} behavior={Platform.select({ ios: "padding", android: undefined })}>
       <View style={styles.card}>
         <Text style={styles.title}>Welcome to BackTrack</Text>
@@ -100,8 +97,6 @@ export default function LoginScreen() {
         </Text>
       </View>
     </KeyboardAvoidingView>
-    </SessionProvider>
-
   );
 }
 

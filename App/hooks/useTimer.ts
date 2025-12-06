@@ -14,14 +14,16 @@ export function useTimer() {
 
   const startTimer = (
     minutes: number,
-    selectedFriends: string[],
-    destination: string
+    selectedFriendUsernames: string[],
+    destination: string,
+    ownerUsername: string
   ) => {
     console.log("Starting timer for", minutes, "minutes");
     setTimer(minutes);
     socket?.emit("startTimer", {
       minutes,
-      selectedFriends,
+      ownerUsername,
+      selectedFriendUsernames,
       destination,
     });
   };

@@ -5,10 +5,18 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Button, StyleSheet, Alert, TextInput, FlatList, TouchableOpacity } from "react-native";
 import { useTimer } from "hooks/useTimer";
 import { useFriends } from "hooks/useFriends";
+import useWebSocket from "hooks/useWebSocket";
+import { useSession } from "hooks/useSession";
+
 
 export default function TimerScreen() {
   const { timer, startTimer, extendTimer, cancelTimer } = useTimer();
   const { friends } = useFriends();
+  const { username } = useSession();
+  const socket = useWebSocket(
+    process.env.EXPO_PUBLIC_API_URL,
+    () => setRunning(false)
+  );
   const [duration, setDuration] = useState<number>(0.1); // Default timer: 5 minutes
   const [destination, setDestination] = useState("");
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
@@ -20,21 +28,32 @@ export default function TimerScreen() {
     );
   };
 
-  const handleStart = () => {
-    if (!destination.trim()) {
-      Alert.alert("Please enter a destination.");
-      return;
-    }
-    if (!duration || isNaN(Number(duration)) || Number(duration) <= 0) {
-      Alert.alert("Please enter a valid duration in minutes.");
-      return;
-    }
-    if (selectedFriends.length === 0) {
-      Alert.alert("Select at least one friend to notify.");
-      return;
-    }
+const handleStart = () => {
+  if (!destination.trim()) {
+    Alert.alert("Please enter a destination.");
+    return;
+  }
+  if (!duration || isNaN(Number(duration)) || Number(duration) <= 0) {
+    Alert.alert("Please enter a valid duration in minutes.");
+    return;
+  }
+  if (selectedFriends.length === 0) {
+    Alert.alert("Select at least one friend to notify.");
+    return;
+  }
+  if (!username) {
+    Alert.alert("Error", "No logged-in username found.");
+    return;
+  }
 
-    startTimer(duration, selectedFriends, destination);
+  startTimer(duration, selectedFriends, destination, username);
+  socket?.emit("startTimer", {
+    minutes: duration,
+    ownerUsername: username,
+    selectedFriendUsernames: selectedFriends,
+    destination,
+    // customMessage: "optional here if you want"
+  });
 
     setRunning(true);
     Alert.alert("Timer started", `Your friends will be notified if you don't check in!`);

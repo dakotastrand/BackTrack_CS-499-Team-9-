@@ -12,3 +12,6 @@ test.db
 # Editor-specific files (VS Code)
 .vscode/
 node_modules/
+
+# Firebase service account key
+firebase-service-account.json

@@ -3,43 +3,46 @@ import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
 const SESSION_KEY = "session";
+const USERNAME_KEY = "username";
 
 interface SessionContextType {
-  signIn: (session: string) => Promise<void>;
+  signIn: (token: string, username: string) => Promise<void>;
   signOut: () => Promise<void>;
   session: string | null;
+  username: string | null;
   isLoading: boolean;
 }
 
-// Create the context with a default undefined value
 export const SessionContext = createContext<SessionContextType | null>(null);
 
-/**
- * The provider component that wraps the app and manages the session state.
- */
 export function SessionProvider(props: { children: React.ReactNode }) {
   const [session, setSession] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function loadSession() {
       try {
         let storedSession: string | null = null;
-        if (Platform.OS !== 'web') {
-          // Use SecureStore on native platforms
+        let storedUsername: string | null = null;
+
+        if (Platform.OS !== "web") {
           storedSession = await SecureStore.getItemAsync(SESSION_KEY);
+          storedUsername = await SecureStore.getItemAsync(USERNAME_KEY);
         } else {
-          // Use localStorage on the web
           storedSession = localStorage.getItem(SESSION_KEY);
+          storedUsername = localStorage.getItem(USERNAME_KEY);
         }
 
-        // const storedSession = await SecureStore.getItemAsync(SESSION_KEY); // This line is redundant and causes the error
         if (storedSession) {
-          console.log('restoring session')
+          console.log("Restoring session");
           setSession(storedSession);
         }
+        if (storedUsername) {
+          setUsername(storedUsername);
+        }
       } catch (e) {
-        console.error("Failed to load session from secure storage", e);
+        console.error("Failed to load session from storage", e);
       } finally {
         setIsLoading(false);
       }
@@ -50,13 +53,16 @@ export function SessionProvider(props: { children: React.ReactNode }) {
 
   const value = useMemo(
     () => ({
-      signIn: async (sessionData: string) => {
-        setSession(sessionData);
+      signIn: async (token: string, usernameValue: string) => {
+        setSession(token);
+        setUsername(usernameValue);
         try {
-          if (Platform.OS !== 'web') {
-            await SecureStore.setItemAsync(SESSION_KEY, sessionData);
+          if (Platform.OS !== "web") {
+            await SecureStore.setItemAsync(SESSION_KEY, token);
+            await SecureStore.setItemAsync(USERNAME_KEY, usernameValue);
           } else {
-            localStorage.setItem(SESSION_KEY, sessionData);
+            localStorage.setItem(SESSION_KEY, token);
+            localStorage.setItem(USERNAME_KEY, usernameValue);
           }
         } catch (e) {
           console.error("Failed to save session", e);
@@ -64,21 +70,25 @@ export function SessionProvider(props: { children: React.ReactNode }) {
       },
       signOut: async () => {
         setSession(null);
+        setUsername(null);
         console.log("Signing out, clearing session");
         try {
-          if (Platform.OS !== 'web') {
+          if (Platform.OS !== "web") {
             await SecureStore.deleteItemAsync(SESSION_KEY);
+            await SecureStore.deleteItemAsync(USERNAME_KEY);
           } else {
             localStorage.removeItem(SESSION_KEY);
+            localStorage.removeItem(USERNAME_KEY);
           }
         } catch (e) {
           console.error("Failed to clear session", e);
         }
       },
       session,
+      username,
       isLoading,
     }),
-    [session, isLoading]
+    [session, username, isLoading]
   );
 
   return (
