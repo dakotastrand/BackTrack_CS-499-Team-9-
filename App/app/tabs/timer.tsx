@@ -1,7 +1,7 @@
 // Dakota Strand - Timer Screen Component
 // Allows user to set, extend, and cancel safety timers
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, Button, StyleSheet, Alert, TextInput, FlatList, TouchableOpacity } from "react-native";
 import { useTimer } from "hooks/useTimer";
 import { useFriends } from "hooks/useFriends";
@@ -9,13 +9,17 @@ import { useSession } from "hooks/useSession";
 
 
 export default function TimerScreen() {
-  const { timer, startTimer, extendTimer, cancelTimer } = useTimer();
+  const { remainingSeconds, status, startTimer, extendTimer, cancelTimer } = useTimer();
   const { friends } = useFriends();
   const { username } = useSession();
   const [duration, setDuration] = useState<number>(0.1); // Default timer: 5 minutes
   const [destination, setDestination] = useState("");
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
-  const [running, setRunning] = useState<boolean>(false);
+
+  const selectedFriendUsernames = useMemo(
+    () => selectedFriends.map((f) => f.toLowerCase()),
+    [selectedFriends]
+  );
 
   const handleSelectFriend = (name: string) => {
     setSelectedFriends((prev) =>
@@ -41,10 +45,13 @@ const handleStart = () => {
     return;
   }
 
- // Start timer via hook (this emits startTimer over the socket)
-  startTimer(duration, selectedFriends, destination, username);
+  const started = startTimer(duration, selectedFriendUsernames, destination, username);
 
-  setRunning(true);
+  if (!started) {
+    Alert.alert("Connection issue", "Unable to start timer because the socket is not connected.");
+    return;
+  }
+
   Alert.alert(
     "Timer started",
     `Your friends will be notified if you don't check in!`
@@ -57,20 +64,25 @@ const handleCancel = () => {
     return;
   }
 
-  cancelTimer(username, selectedFriends, destination);
-  setRunning(false);
+  cancelTimer(username, selectedFriendUsernames, destination);
 };
 
- 
   useEffect(() => {
-    if (!timer && running) {
+    if (status === "expired") {
       Alert.alert(
         "Time's up!",
         `You didn't check in from "${destination}" on time. Notifying friends: ${selectedFriends.join(", ")}`
       );
-      setRunning(false);
     }
-  }, [timer]);
+  }, [status, destination, selectedFriends]);
+
+  const formattedRemaining = useMemo(() => {
+    if (status === "expired") return "Timer expired";
+    if (remainingSeconds === null) return "Timer not running";
+    const mins = Math.floor(remainingSeconds / 60);
+    const secs = remainingSeconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")} remaining`;
+  }, [remainingSeconds, status]);
 
   return (
      <View style={styles.container}>
@@ -111,12 +123,25 @@ const handleCancel = () => {
          )}
        />
  
-       <Text style={styles.timerText}>{timer ? `${duration} m remaining` : "Timer not running"}</Text>
+       <Text style={styles.timerText}>{formattedRemaining}</Text>
  
        <View style={styles.buttons}>
          <Button title="Start" onPress={handleStart} color="green" />
          <Button title="Cancel" onPress={handleCancel} color="darkgreen" />
-         <Button title="Extend" onPress={() => extendTimer(5)} color="green" />
+         <Button
+           title="Extend"
+           onPress={() => {
+             if (!username) {
+               Alert.alert("Error", "No logged-in username found.");
+               return;
+             }
+             const extended = extendTimer(5, username);
+             if (!extended) {
+               Alert.alert("Cannot extend", "Start the timer first or check your connection.");
+             }
+           }}
+           color="green"
+         />
        </View>
      </View>
    );

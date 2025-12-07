@@ -158,17 +158,44 @@ def handle_message(data):
 
 def timer_task(
     sid,
-    duration_minutes: float,
     owner_username: str,
     selected_friend_usernames: list[str],
     destination: str,
     alert_id: str,
 ):
-    """Background task to wait and then notify the client AND send emails."""
-    print(f"Timer started for {duration_minutes} minutes for client {sid}.")
-    eventlet.sleep(duration_minutes * 60)
-    print(f"Timer finished for client {sid}.")
+    """
+    Background task that polls the DB for alert status/end time so we can respect
+    cancel/extend actions before emitting timerComplete or sending emails.
+    """
+    print(f"Timer background task started for client {sid}, alert {alert_id}.")
 
+    expired = False
+
+    while True:
+        with app.app_context():
+            alert = Alert.query.filter_by(alert_id=alert_id).first()
+            if not alert:
+                print(f"timer_task: alert {alert_id} not found, stopping task.")
+                break
+
+            if alert.status != "pending":
+                print(f"timer_task: alert {alert_id} no longer pending ({alert.status}), stopping.")
+                break
+
+            now = datetime.now(timezone.utc)
+            remaining_seconds = (alert.end_time - now).total_seconds()
+
+        if remaining_seconds <= 0:
+            expired = True
+            break
+
+        # Poll every few seconds to notice extend/cancel quickly
+        eventlet.sleep(min(remaining_seconds, 5))
+
+    if not expired:
+        return
+
+    print(f"Timer finished for client {sid}, alert {alert_id}.")
     socket_app.emit("timerComplete", room=sid)
 
     emails = resolve_friend_emails(owner_username, selected_friend_usernames)
@@ -312,7 +339,6 @@ def start_timer(data):
         socket_app.start_background_task(
             target=timer_task,
             sid=request.sid,
-            duration_minutes=minutes,
             owner_username=owner_username,
             selected_friend_usernames=selected_friends,
             destination=destination,
@@ -396,10 +422,6 @@ def cancel_timer(data):
     socket_app.emit("timerCancelled", room=request.sid)
 
 
-
-
-
-
 def resolve_friend_emails(owner_username: str, selected_friend_usernames: list[str]) -> list[str]:
     """
     Given an owner username and a list of friend usernames,
@@ -432,33 +454,34 @@ def resolve_friend_emails(owner_username: str, selected_friend_usernames: list[s
             emails.append(friend_user.email)
 
         return emails
-    
 
-@socket_app.on("cancelTimer")
-def cancel_timer(data):
+
+@socket_app.on("extendTimer")
+def extend_timer(data):
     """
     data example from Expo app:
     {
-      "ownerUsername": "Will",
-      "selectedFriendUsernames": ["dakota"],
-      "destination": "Library"
+      "minutes": 5,
+      "ownerUsername": "Will"
     }
     """
     owner_username = data.get("ownerUsername")
-    selected_friends = data.get("selectedFriendUsernames") or []
-    destination = data.get("destination") or ""
+    try:
+        minutes = float(data.get("minutes"))
+    except (TypeError, ValueError, AttributeError):
+        print(f"extendTimer: invalid minutes {data}")
+        return
 
-    if not owner_username:
-        print("cancelTimer: no ownerUsername provided")
+    if not owner_username or minutes <= 0:
+        print("extendTimer: missing ownerUsername or non-positive minutes")
         return
 
     with app.app_context():
         owner = User.query.filter_by(username=owner_username).first()
         if not owner:
-            print(f"cancelTimer: owner {owner_username} not found")
+            print(f"extendTimer: owner {owner_username} not found")
             return
 
-        # Find the most recent pending alert for this user
         alert = (
             Alert.query.filter_by(user_id=owner.user_id, status="pending")
             .order_by(Alert.start_time.desc())
@@ -466,45 +489,20 @@ def cancel_timer(data):
         )
 
         if not alert:
-            print(f"cancelTimer: no pending alert found for {owner_username}")
-        else:
-            alert.status = "stopped"  # or "paused", if you prefer
+            print(f"extendTimer: no pending alert for {owner_username}")
+            return
 
-            recipients = AlertRecipient.query.filter_by(alert_id=alert.alert_id).all()
-            for r in recipients:
-                r.notified_status = "stopped"
-
-            record = Record(
-                user_id=owner.user_id,
-                alert_id=alert.alert_id,
-                time_stamp=datetime.now(timezone.utc),
-            )
-            db.session.add(record)
-
+        alert.end_time = alert.end_time + timedelta(minutes=minutes)
+        alert.total_time = alert.end_time - alert.start_time
         db.session.commit()
 
-    # Email friends that the timer was stopped / user checked in safely
-    emails = resolve_friend_emails(owner_username, selected_friends)
-    if emails:
-        if destination:
-            text = (
-                f"{owner_username} ended their BackTrack timer early and checked in "
-                f"from '{destination}'."
-            )
-        else:
-            text = (
-                f"{owner_username} ended their BackTrack timer early and checked in safely."
-            )
-
-        subject = f"{owner_username}'s BackTrack timer stopped"
-
-        queue_email(
-            to_emails=emails,
-            subject=subject,
-            text=text,
-            html=f"<p>{text}</p>",
-        )
-
-    # Optionally also notify the client via socket
-    socket_app.emit("timerCancelled", room=request.sid)
+    socket_app.emit(
+        "timerExtended",
+        {
+            "alertId": alert.alert_id,
+            "endTime": alert.end_time.isoformat(),
+            "minutesAdded": minutes,
+        },
+        room=request.sid,
+    )
 
