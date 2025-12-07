@@ -10,19 +10,9 @@ from flask_socketio import SocketIO, emit
 from werkzeug.security import generate_password_hash, check_password_hash 
 import jwt
 from dotenv import load_dotenv
-import smtplib
-from email.message import EmailMessage
 from table import User, Friend, Alert, AlertRecipient, Record, db
 import firebase_admin
 from firebase_admin import credentials, firestore
-
-
-
-SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER")
-SMTP_PASS = os.getenv("SMTP_PASS")
-EMAIL_FROM = os.getenv("EMAIL_FROM", SMTP_USER)
 
 
 
@@ -227,9 +217,9 @@ def start_timer(data):
     {
       "minutes": 20,
       "ownerUsername": "Will",
-      "selectedFriendUsernames": ["dakota",],
+      "selectedFriendUsernames": ["dakota"],
       "destination": "Library",
-      "customMessage": "If I don't check in, please text me."
+      "customMessage": "If I don't check in, please text me." <--- we're not using this *yet*
     }
     """
     print(f'Client sent data on socket: {str(data)}')
@@ -295,54 +285,118 @@ def start_timer(data):
 
         db.session.commit()
 
-    socket_app.start_background_task(
-        target=timer_task,
-        sid=request.sid,
-        duration_minutes=minutes,
-        owner_username=owner_username,
-        selected_friend_usernames=selected_friends,
-        destination=destination,
-        alert_id=alert.alert_id,
-    )
+            # After committing the Alert + recipients
+        emails = resolve_friend_emails(owner_username, selected_friends)
 
-def send_email(subject: str, body: str, recipients: list[str]) -> None:
-    """Send a plain-text email to a list of recipients."""
-    if not recipients:
-        print("send_email: no recipients, skipping.")
+        if emails:
+            if destination:
+                text = (
+                    f"{owner_username} started a BackTrack timer for {minutes} minutes "
+                    f"to '{destination}'. You'll be notified if they don't check in."
+                )
+            else:
+                text = (
+                    f"{owner_username} started a BackTrack timer for {minutes} minutes. "
+                    "You'll be notified if they don't check in."
+                )
+
+            subject = f"{owner_username} started a BackTrack timer"
+
+            queue_email(
+                to_emails=emails,
+                subject=subject,
+                text=text,
+                html=f"<p>{text}</p>",
+            )
+
+        socket_app.start_background_task(
+            target=timer_task,
+            sid=request.sid,
+            duration_minutes=minutes,
+            owner_username=owner_username,
+            selected_friend_usernames=selected_friends,
+            destination=destination,
+            alert_id=alert.alert_id,
+        )
+
+
+@socket_app.on("cancelTimer")
+def cancel_timer(data):
+    """
+    data example from Expo app:
+    {
+      "ownerUsername": "Will",
+      "selectedFriendUsernames": ["dakota"],
+      "destination": "Library"
+    }
+    """
+    owner_username = data.get("ownerUsername")
+    selected_friends = data.get("selectedFriendUsernames") or []
+    destination = data.get("destination") or ""
+
+    if not owner_username:
+        print("cancelTimer: no ownerUsername provided")
         return
 
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = EMAIL_FROM
-    msg["To"] = ", ".join(recipients)
-    msg.set_content(body)
+    with app.app_context():
+        owner = User.query.filter_by(username=owner_username).first()
+        if not owner:
+            print(f"cancelTimer: owner {owner_username} not found")
+            return
 
-    try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASS)
-            server.send_message(msg)
-        print(f"Email sent to: {recipients}")
-    except Exception as e:
-        print("Error sending email:", e)
+        # Find the most recent pending alert for this user
+        alert = (
+            Alert.query.filter_by(user_id=owner.user_id, status="pending")
+            .order_by(Alert.start_time.desc())
+            .first()
+        )
 
-    
-def get_friend_emails_for_ids(owner_user_id: str, friend_ids: list[str]) -> list[str]:
-    if not friend_ids:
-        return []
+        if not alert:
+            print(f"cancelTimer: no pending alert found for {owner_username}")
+            return
+        else:
+            alert.status = "stopped"  # or "paused", if you prefer
 
-    friends = Friend.query.filter(
-        Friend.friend_id.in_(friend_ids),
-        Friend.user_id == owner_user_id,
-    ).all()
+            recipients = AlertRecipient.query.filter_by(alert_id=alert.alert_id).all()
+            for r in recipients:
+                r.notified_status = "stopped"
 
-    emails: list[str] = []
-    for f in friends:
-        if getattr(f, "email", None):
-            emails.append(f.email)
+            record = Record(
+                user_id=owner.user_id,
+                alert_id=alert.alert_id,
+                time_stamp=datetime.now(timezone.utc),
+            )
+            db.session.add(record)
 
-    
-    return sorted(set(emails))
+        db.session.commit()
+
+    # Email friends that the timer was stopped / user checked in safely
+    emails = resolve_friend_emails(owner_username, selected_friends)
+    if emails:
+        if destination:
+            text = (
+                f"{owner_username} ended their BackTrack timer early and checked in "
+                f"from '{destination}'."
+            )
+        else:
+            text = (
+                f"{owner_username} ended their BackTrack timer early and checked in safely."
+            )
+
+        subject = f"{owner_username}'s BackTrack timer stopped"
+
+        queue_email(
+            to_emails=emails,
+            subject=subject,
+            text=text,
+            html=f"<p>{text}</p>",
+        )
+
+    # Optionally also notify the client via socket
+    socket_app.emit("timerCancelled", room=request.sid)
+
+
+
 
 
 
@@ -378,3 +432,79 @@ def resolve_friend_emails(owner_username: str, selected_friend_usernames: list[s
             emails.append(friend_user.email)
 
         return emails
+    
+
+@socket_app.on("cancelTimer")
+def cancel_timer(data):
+    """
+    data example from Expo app:
+    {
+      "ownerUsername": "Will",
+      "selectedFriendUsernames": ["dakota"],
+      "destination": "Library"
+    }
+    """
+    owner_username = data.get("ownerUsername")
+    selected_friends = data.get("selectedFriendUsernames") or []
+    destination = data.get("destination") or ""
+
+    if not owner_username:
+        print("cancelTimer: no ownerUsername provided")
+        return
+
+    with app.app_context():
+        owner = User.query.filter_by(username=owner_username).first()
+        if not owner:
+            print(f"cancelTimer: owner {owner_username} not found")
+            return
+
+        # Find the most recent pending alert for this user
+        alert = (
+            Alert.query.filter_by(user_id=owner.user_id, status="pending")
+            .order_by(Alert.start_time.desc())
+            .first()
+        )
+
+        if not alert:
+            print(f"cancelTimer: no pending alert found for {owner_username}")
+        else:
+            alert.status = "stopped"  # or "paused", if you prefer
+
+            recipients = AlertRecipient.query.filter_by(alert_id=alert.alert_id).all()
+            for r in recipients:
+                r.notified_status = "stopped"
+
+            record = Record(
+                user_id=owner.user_id,
+                alert_id=alert.alert_id,
+                time_stamp=datetime.now(timezone.utc),
+            )
+            db.session.add(record)
+
+        db.session.commit()
+
+    # Email friends that the timer was stopped / user checked in safely
+    emails = resolve_friend_emails(owner_username, selected_friends)
+    if emails:
+        if destination:
+            text = (
+                f"{owner_username} ended their BackTrack timer early and checked in "
+                f"from '{destination}'."
+            )
+        else:
+            text = (
+                f"{owner_username} ended their BackTrack timer early and checked in safely."
+            )
+
+        subject = f"{owner_username}'s BackTrack timer stopped"
+
+        queue_email(
+            to_emails=emails,
+            subject=subject,
+            text=text,
+            html=f"<p>{text}</p>",
+        )
+
+    # Optionally also notify the client via socket
+    socket_app.emit("timerCancelled", room=request.sid)
+

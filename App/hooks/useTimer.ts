@@ -34,7 +34,22 @@ export function useTimer() {
     }
   };
 
-  const cancelTimer = () => setTimer(null);
+  const cancelTimer = (
+    ownerUsername: string,
+    selectedFriendUsernames: string[],
+    destination: string
+  ) => {
+    if (timer === null) return;
+
+    setTimer(null);
+
+    socket?.emit("cancelTimer", {
+      ownerUsername,
+      selectedFriendUsernames,
+      destination,
+    });
+  };
+
 
   return { timer, startTimer, extendTimer, cancelTimer };
 }

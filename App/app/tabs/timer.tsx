@@ -5,7 +5,6 @@ import React, { useEffect, useState } from "react";
 import { View, Text, Button, StyleSheet, Alert, TextInput, FlatList, TouchableOpacity } from "react-native";
 import { useTimer } from "hooks/useTimer";
 import { useFriends } from "hooks/useFriends";
-import useWebSocket from "hooks/useWebSocket";
 import { useSession } from "hooks/useSession";
 
 
@@ -13,10 +12,6 @@ export default function TimerScreen() {
   const { timer, startTimer, extendTimer, cancelTimer } = useTimer();
   const { friends } = useFriends();
   const { username } = useSession();
-  const socket = useWebSocket(
-    process.env.EXPO_PUBLIC_API_URL,
-    () => setRunning(false)
-  );
   const [duration, setDuration] = useState<number>(0.1); // Default timer: 5 minutes
   const [destination, setDestination] = useState("");
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
@@ -46,22 +41,26 @@ const handleStart = () => {
     return;
   }
 
+ // Start timer via hook (this emits startTimer over the socket)
   startTimer(duration, selectedFriends, destination, username);
-  socket?.emit("startTimer", {
-    minutes: duration,
-    ownerUsername: username,
-    selectedFriendUsernames: selectedFriends,
-    destination,
-    // customMessage: "optional here if you want"
-  });
 
-    setRunning(true);
-    Alert.alert("Timer started", `Your friends will be notified if you don't check in!`);
-  };
+  setRunning(true);
+  Alert.alert(
+    "Timer started",
+    `Your friends will be notified if you don't check in!`
+  );
+};
 
-  const handleCancel = () => {
-    cancelTimer();
-  };
+const handleCancel = () => {
+  if (!username) {
+    Alert.alert("Error", "No logged-in username found.");
+    return;
+  }
+
+  cancelTimer(username, selectedFriends, destination);
+  setRunning(false);
+};
+
  
   useEffect(() => {
     if (!timer && running) {
